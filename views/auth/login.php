@@ -144,7 +144,18 @@
                 const response = await fetch(`${window.baseUrl}centros_acopio_lista`);
 
                 if (!response.ok) {
+                    const text = await response.text();
+                    console.error('Status:', response.status);
+                    console.error('Response body (first 500 chars):', text.slice(0, 500));
                     throw new Error(`Error en la petición: ${response.status}`);
+                }
+
+                const contentType = response.headers.get('content-type') || '';
+                if (!contentType.includes('application/json')) {
+                    const text = await response.text();
+                    console.error('Content-Type:', contentType);
+                    console.error('Response body (first 500 chars):', text.slice(0, 500));
+                    throw new Error('La respuesta no es JSON. Content-Type: ' + contentType);
                 }
 
                 const result = await response.json();
@@ -161,7 +172,6 @@
                 }
 
             } catch (error) {
-                console.log(error)
                 console.error("Error loading centers:", error);
             }
         }

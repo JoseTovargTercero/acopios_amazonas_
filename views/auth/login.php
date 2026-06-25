@@ -140,9 +140,9 @@
 
 
         async function cargarCentros() {
+            const url = `${window.baseUrl}centros_acopio_lista`;
+            console.log('Fetching URL:', url);
             try {
-                const url = `${window.baseUrl}centros_acopio_lista`;
-                console.log('Fetching URL:', url);
                 const response = await fetch(url);
 
                 if (!response.ok) {

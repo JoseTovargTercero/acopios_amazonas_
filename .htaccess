@@ -32,5 +32,5 @@ RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 
 # Regla: Redirige todas las demás solicitudes a index.php
-# Esto permite que tu enrutador PHP maneje la URL.
-RewriteRule . /acopio/index.php [L]
+# Esto permite que tu enrutador PHP maneje la URL sin importar el nombre de la carpeta.
+RewriteRule ^(.*)$ index.php [QSA,L]

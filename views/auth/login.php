@@ -147,7 +147,10 @@
                     throw new Error(`Error en la petición: ${response.status}`);
                 }
 
-                const result = await response.json();
+                let result = await response.text();
+                console.log(result)
+
+                result = JSON.parse(result)
 
                 if (result.value && Array.isArray(result.data)) {
                     const select = document.getElementById('emailaddress');

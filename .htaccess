@@ -1,8 +1,8 @@
 # Activa el motor de reescritura de URLs
 RewriteEngine On
 
-# Establece el directorio base para las reglas de reescritura
-RewriteBase /
+# RewriteBase se omite intencionalmente para que rutas relativas
+# apunten al directorio donde está este .htaccess (portátil entre entornos).
 
 # -------------------------------------------------------------
 # REGLAS DE SEGURIDAD

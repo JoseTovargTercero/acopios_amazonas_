@@ -148,20 +148,20 @@
                 }
 
                 let result = await response.text();
-                console.log(result)
+                console.log('result', result)
+                /*
+                                result = JSON.parse(result)
 
-                result = JSON.parse(result)
-
-                if (result.value && Array.isArray(result.data)) {
-                    const select = document.getElementById('emailaddress');
-                    select.innerHTML = '<option value="">Seleccione</option>';
-                    result.data.forEach(centro => {
-                        const option = document.createElement('option');
-                        option.value = centro.nombre;
-                        option.textContent = centro.nombre;
-                        select.appendChild(option);
-                    });
-                }
+                                if (result.value && Array.isArray(result.data)) {
+                                    const select = document.getElementById('emailaddress');
+                                    select.innerHTML = '<option value="">Seleccione</option>';
+                                    result.data.forEach(centro => {
+                                        const option = document.createElement('option');
+                                        option.value = centro.nombre;
+                                        option.textContent = centro.nombre;
+                                        select.appendChild(option);
+                                    });
+                                }*/
 
             } catch (error) {
                 console.error("Error loading centers:", error);

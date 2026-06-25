@@ -140,6 +140,7 @@
 
 
         async function cargarCentros() {
+            console.log(window.baseUrl)
             try {
                 const response = await fetch(`${window.baseUrl}centros_acopio_lista`);
 
@@ -168,6 +169,7 @@
             }
         }
 
+        console.log('; asdpaisd')
         document.addEventListener('DOMContentLoaded', () => cargarCentros());
     </script>
 

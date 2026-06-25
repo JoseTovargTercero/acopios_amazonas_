@@ -20,9 +20,9 @@ class Database
         $this->loadEnv(APP_ROOT . '/.env');
 
         $host = 'localhost';
-        $dbname = 'acopio_user';
-        $username = 'd{adu7O~Hygc';
-        $password =  '';
+        $dbname = 'acopio';
+        $username = 'acopio_user';
+        $password =  'd{adu7O~Hygc';
 
         // Definimos estas constantes solo si no existen, para evitar notificaciones de "Constant already defined"
         if (!defined('APP_URL')) {

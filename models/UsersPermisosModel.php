@@ -1,0 +1,431 @@
+<?php
+require_once __DIR__ . '/../config/Database.php';
+require_once __DIR__ . '/../config/ClientEnvironmentInfo.php';
+require_once __DIR__ . '/../config/TimezoneManager.php';
+require_once __DIR__ . '/MenuModel.php'; // Para la variante via MenuModel
+require_once __DIR__ . '/../helpers/UuidHelper.php';
+
+class UsersPermisosModel
+{
+    private $db;
+    private $table = 'users_permisos';
+
+    public function __construct()
+    {
+        $this->db = Database::getInstance();
+    }
+
+    /* ===== Utilidades ===== */
+
+
+
+    private function nowWithAudit(): array
+    {
+        $env = new ClientEnvironmentInfo(APP_ROOT . '/app/config/geolite.mmdb');
+        // userId=0 si aún no hay sesión; lo importante es setear contexto y tz
+          $uuid    = UuidHelper::generateUUIDv4();
+            $actorId = $_SESSION['user_id'] ?? $uuid;
+        $env->applyAuditContext($this->db, $actorId);
+        $tzManager = new TimezoneManager($this->db);
+        $tzManager->applyTimezone();
+        return [$env->getCurrentDatetime(), $env];
+    }
+
+    private function validarUUID(string $id, string $label): void
+    {
+        if ($id === '' || strlen($id) < 4) {
+            throw new InvalidArgumentException("$label inválido.");
+        }
+    }
+
+    private function existeUsuario(string $userId): bool
+    {
+        $sql = "SELECT 1 FROM system_users WHERE user_id = ? AND (deleted_at IS NULL OR deleted_at = '') LIMIT 1";
+        $stmt = $this->db->prepare($sql);
+        if (!$stmt)
+            throw new mysqli_sql_exception("Error al preparar verificación de usuario: " . $this->db->error);
+        $stmt->bind_param('s', $userId);
+        $stmt->execute();
+        $stmt->store_result();
+        $ok = $stmt->num_rows > 0;
+        $stmt->close();
+        return $ok;
+    }
+    public function listarTodosLosPermisosDeMenu(): array
+    {
+        // Esta función consulta la tabla 'menu' directamente,
+        // ignorando la tabla 'users_permisos'.
+        $sql = "SELECT m.menu_id, m.categoria, m.nombre, m.url, m.icono, m.user_level
+                FROM menu m
+                WHERE (m.deleted_at IS NULL OR m.deleted_at = '')
+                ORDER BY m.categoria, m.nombre"; // Un orden lógico es buena idea
+
+        $stmt = $this->db->prepare($sql);
+        if (!$stmt) {
+            throw new mysqli_sql_exception("Error al preparar listado total de menús: " . $this->db->error);
+        }
+
+        $stmt->execute();
+        $res = $stmt->get_result();
+
+        $out = [];
+        while ($row = $res->fetch_assoc()) {
+            // Emulamos la estructura de salida de listarPermisosConMenu()
+            // para que el controlador 'loginApp' la procese igual.
+            $out[] = [
+                // Estos campos no aplican, pero se ponen null para mantener la estructura
+                'users_permisos_id' => null, 
+                'user_id' => null,           
+                'menu' => [
+                    'menu_id' => $row['menu_id'],
+                    'categoria' => $row['categoria'],
+                    'nombre' => $row['nombre'],
+                    'url' => $row['url'],
+                    'icono' => $row['icono'],
+                    'user_level' => (int) $row['user_level'],
+                ],
+            ];
+        }
+        $stmt->close();
+        return $out;
+    }
+
+    private function existeMenu(string $menuId): bool
+    {
+        $sql = "SELECT 1 FROM menu WHERE menu_id = ? AND (deleted_at IS NULL OR deleted_at = '') LIMIT 1";
+        $stmt = $this->db->prepare($sql);
+        if (!$stmt)
+            throw new mysqli_sql_exception("Error al preparar verificación de menú: " . $this->db->error);
+        $stmt->bind_param('s', $menuId);
+        $stmt->execute();
+        $stmt->store_result();
+        $ok = $stmt->num_rows > 0;
+        $stmt->close();
+        return $ok;
+    }
+
+    /* ===== Escrituras ===== */
+    /**
+     * Sincroniza los permisos de un usuario con una lista dada de menu_ids.
+     * Añade los que faltan y elimina los que sobran.
+     *
+     * @param string $userId
+     * @param array $nuevosMenuIds
+     * @return array { added: array, removed_count: int, errors: array }
+     */
+    public function sincronizarPermisos(string $userId, array $nuevosMenuIds): array
+    {
+        $this->validarUUID($userId, 'user_id');
+        if (!$this->existeUsuario($userId)) {
+            throw new InvalidArgumentException('user_id no existe o está eliminado.');
+        }
+
+        // 1. Sanear y validar los menu_ids de entrada
+        $menuIdsValidos = [];
+        $errors = [];
+        foreach ($nuevosMenuIds as $menuId) {
+            $id = trim((string) $menuId);
+            if ($id !== '') {
+                if ($this->existeMenu($id)) {
+                    $menuIdsValidos[] = $id;
+                } else {
+                    $errors[] = ['menu_id' => $id, 'error' => 'menú no existe o está eliminado'];
+                }
+            }
+        }
+        // Nos aseguramos de que no haya duplicados en la lista de entrada
+        $menuIdsValidos = array_unique($menuIdsValidos);
+
+        $this->db->begin_transaction();
+        try {
+            // 2. Obtener los permisos actuales del usuario
+            $sqlExistentes = "SELECT menu_id FROM {$this->table} WHERE user_id = ?";
+            $stmtExistentes = $this->db->prepare($sqlExistentes);
+            $stmtExistentes->bind_param('s', $userId);
+            $stmtExistentes->execute();
+            $res = $stmtExistentes->get_result();
+            $menuIdsActuales = [];
+            while ($row = $res->fetch_assoc()) {
+                $menuIdsActuales[] = $row['menu_id'];
+            }
+            $stmtExistentes->close();
+
+            // 3. Calcular diferencias: qué añadir y qué eliminar
+            $menuIdsParaAgregar = array_diff($menuIdsValidos, $menuIdsActuales);
+            $menuIdsParaEliminar = array_diff($menuIdsActuales, $menuIdsValidos);
+
+            // 4. Eliminar permisos sobrantes (si los hay)
+            $eliminadosCount = 0;
+            if (!empty($menuIdsParaEliminar)) {
+                $placeholders = implode(',', array_fill(0, count($menuIdsParaEliminar), '?'));
+                $sqlDelete = "DELETE FROM {$this->table} WHERE user_id = ? AND menu_id IN ($placeholders)";
+                $stmtDelete = $this->db->prepare($sqlDelete);
+                $types = 's' . str_repeat('s', count($menuIdsParaEliminar));
+                $params = array_merge([$userId], $menuIdsParaEliminar);
+                $stmtDelete->bind_param($types, ...$params);
+                $stmtDelete->execute();
+                $eliminadosCount = $stmtDelete->affected_rows;
+                $stmtDelete->close();
+            }
+
+            // 5. Añadir nuevos permisos (si los hay)
+            $agregados = [];
+            if (!empty($menuIdsParaAgregar)) {
+                [$now, $env] = $this->nowWithAudit();
+                $actorId = $_SESSION['user_id'] ?? $userId;
+                $sqlInsert = "INSERT INTO {$this->table} (users_permisos_id, user_id, menu_id, created_at, created_by) VALUES (?, ?, ?, ?, ?)";
+                $stmtInsert = $this->db->prepare($sqlInsert);
+
+                foreach ($menuIdsParaAgregar as $menuId) {
+                    $uuid = UuidHelper::generateUUIDv4();
+                    $stmtInsert->bind_param('sssss', $uuid, $userId, $menuId, $now, $actorId);
+                    if ($stmtInsert->execute()) {
+                        $agregados[] = ['users_permisos_id' => $uuid, 'menu_id' => $menuId];
+                    } else {
+                        throw new mysqli_sql_exception("Error al insertar permiso para menu_id $menuId: " . $stmtInsert->error);
+                    }
+                }
+                $stmtInsert->close();
+            }
+
+            $this->db->commit();
+
+            return [
+                'added' => $agregados,
+                'removed_count' => $eliminadosCount,
+                'errors' => $errors
+            ];
+        } catch (\Throwable $e) {
+            $this->db->rollback();
+            throw $e;
+        }
+    }
+
+    /**
+     * Asigna permisos en lote: inserta N filas (user_id, menu_id) una por una.
+     * Devuelve arrays con insertados, duplicados y errores.
+     *
+     * @param string $userId
+     * @param array $menuIds
+     * @return array { inserted: [], duplicates: [], errors: [] }
+     */
+    public function asignarPermisos(string $userId, array $menuIds): array
+    {
+        $this->validarUUID($userId, 'user_id');
+        if (!$this->existeUsuario($userId)) {
+            throw new InvalidArgumentException('user_id no existe o está eliminado.');
+        }
+
+        [$now, $env] = $this->nowWithAudit();
+        $actorId = $_SESSION['user_id'] ?? $userId;
+
+        $sql = "INSERT INTO {$this->table}
+                (users_permisos_id, user_id, menu_id, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by)
+                VALUES (?, ?, ?, ?, ?, NULL, NULL, NULL, NULL)";
+        $stmt = $this->db->prepare($sql);
+        if (!$stmt)
+            throw new mysqli_sql_exception("Error al preparar inserción: " . $this->db->error);
+
+        $this->db->begin_transaction();
+        $inserted = [];
+        $duplicates = [];
+        $errors = [];
+
+        try {
+            foreach ($menuIds as $menuId) {
+                $menuId = trim((string) $menuId);
+                if ($menuId === '') {
+                    $errors[] = ['menu_id' => $menuId, 'error' => 'menu_id vacío'];
+                    continue;
+                }
+                if (!$this->existeMenu($menuId)) {
+                    $errors[] = ['menu_id' => $menuId, 'error' => 'menú no existe'];
+                    continue;
+                }
+
+                $uuid = UuidHelper::generateUUIDv4();
+                $stmt->bind_param('sssss', $uuid, $userId, $menuId, $now, $actorId);
+                $ok = @$stmt->execute();
+                if ($ok) {
+                    $inserted[] = ['users_permisos_id' => $uuid, 'menu_id' => $menuId];
+                } else {
+                    $err = strtolower($stmt->error);
+                    if (str_contains($err, 'duplicate')) {
+                        $duplicates[] = $menuId;
+                    } else {
+                        $errors[] = ['menu_id' => $menuId, 'error' => $stmt->error];
+                    }
+                }
+            }
+            $stmt->close();
+            $this->db->commit();
+
+            return compact('inserted', 'duplicates', 'errors');
+        } catch (\Throwable $e) {
+            $stmt->close();
+            $this->db->rollback();
+            throw $e;
+        }
+    }
+
+    /* ===== Lecturas ===== */
+
+    /**
+     * Variante RÁPIDA: devuelve permisos con datos del menú via JOIN.
+     * Estructura: [{ users_permisos_id, user_id, menu: {menu_id, categoria, nombre, url, icono, user_level} }]
+     */
+    public function listarPermisosConMenu(string $userId): array
+    {
+        $this->validarUUID($userId, 'user_id');
+
+        $sql = "SELECT up.users_permisos_id, up.user_id,
+                       m.menu_id, m.categoria, m.nombre, m.url, m.icono, m.user_level
+                FROM {$this->table} up
+                INNER JOIN menu m ON m.menu_id = up.menu_id
+                WHERE up.user_id = ? AND (m.deleted_at IS NULL OR m.deleted_at = '')";
+        $stmt = $this->db->prepare($sql);
+        if (!$stmt)
+            throw new mysqli_sql_exception("Error al preparar listado: " . $this->db->error);
+
+        $stmt->bind_param('s', $userId);
+        $stmt->execute();
+        $res = $stmt->get_result();
+
+        $out = [];
+        while ($row = $res->fetch_assoc()) {
+            $out[] = [
+                'users_permisos_id' => $row['users_permisos_id'],
+                'user_id' => $row['user_id'],
+                'menu' => [
+                    'menu_id' => $row['menu_id'],
+                    'categoria' => $row['categoria'],
+                    'nombre' => $row['nombre'],
+                    'url' => $row['url'],
+                    'icono' => $row['icono'],
+                    'user_level' => (int) $row['user_level'],
+                ],
+            ];
+        }
+        $stmt->close();
+        return $out;
+    }
+
+    /**
+     * Variante solicitada: usa MenuModel::obtenerPorId($menuId) para traer el menú de cada permiso.
+     * Devuelve misma estructura que la anterior.
+     */
+    public function listarPermisosConMenu_UsandoMenuModel(string $userId): array
+    {
+        $this->validarUUID($userId, 'user_id');
+
+        $sql = "SELECT users_permisos_id, user_id, menu_id
+                FROM {$this->table}
+                WHERE user_id = ?";
+        $stmt = $this->db->prepare($sql);
+        if (!$stmt)
+            throw new mysqli_sql_exception("Error al preparar listado: " . $this->db->error);
+
+        $stmt->bind_param('s', $userId);
+        $stmt->execute();
+        $res = $stmt->get_result();
+
+        $menuModel = new MenuModel();
+        $out = [];
+        while ($row = $res->fetch_assoc()) {
+            $menu = $menuModel->obtenerPorId((string) $row['menu_id']);
+            if ($menu && ($menu['deleted_at'] ?? null) === null) {
+                $out[] = [
+                    'users_permisos_id' => $row['users_permisos_id'],
+                    'user_id' => $row['user_id'],
+                    'menu' => [
+                        'menu_id' => $menu['menu_id'],
+                        'categoria' => $menu['categoria'],
+                        'nombre' => $menu['nombre'],
+                        'url' => $menu['url'],
+                        'icono' => $menu['icono'],
+                        'user_level' => (int) $menu['user_level'],
+                    ],
+                ];
+            }
+        }
+        $stmt->close();
+        return $out;
+    }
+
+    /* ===== Eliminaciones ===== */
+
+    // Elimina un permiso específico (delete físico)
+    public function eliminarUno(string $usersPermisosId): bool
+    {
+        $this->validarUUID($usersPermisosId, 'users_permisos_id');
+
+        $sql = "DELETE FROM {$this->table} WHERE users_permisos_id = ?";
+        $stmt = $this->db->prepare($sql);
+        if (!$stmt)
+            throw new mysqli_sql_exception("Error al preparar eliminación: " . $this->db->error);
+
+        $stmt->bind_param('s', $usersPermisosId);
+        $stmt->execute();
+        $affected = $stmt->affected_rows;
+        $stmt->close();
+        return $affected > 0;
+    }
+
+    // Elimina todos los permisos de un usuario (delete físico masivo)
+    public function eliminarPorUsuario(string $userId): int
+    {
+        $this->validarUUID($userId, 'user_id');
+
+        $sql = "DELETE FROM {$this->table} WHERE user_id = ?";
+        $stmt = $this->db->prepare($sql);
+        if (!$stmt)
+            throw new mysqli_sql_exception("Error al preparar eliminación: " . $this->db->error);
+
+        $stmt->bind_param('s', $userId);
+        $stmt->execute();
+        $affected = $stmt->affected_rows;
+        $stmt->close();
+        return $affected;
+    }
+
+    /**
+     * Verifica si un usuario tiene permiso para acceder a una URL específica
+     * Los administradores (nivel 0) siempre tienen acceso
+     * 
+     * @param string $userId ID del usuario
+     * @param string $url URL a verificar (ej: 'acontecimientos', 'acontecimientos/crear')
+     * @param int $userLevel Nivel del usuario (0=admin, 1+=usuario normal)
+     * @return bool True si tiene permiso, false si no
+     */
+    public function tienePermisoUrl(string $userId, string $url, int $userLevel): bool
+    {
+        // Los administradores siempre tienen acceso
+        if ($userLevel === 0) {
+            return true;
+        }
+
+        $this->validarUUID($userId, 'user_id');
+
+        // Buscar el menu_id correspondiente a la URL
+        $sql = "SELECT up.users_permisos_id
+                FROM {$this->table} up
+                INNER JOIN menu m ON m.menu_id = up.menu_id
+                WHERE up.user_id = ? 
+                  AND m.url = ? 
+                  AND (m.deleted_at IS NULL OR m.deleted_at = '')
+                LIMIT 1";
+        
+        $stmt = $this->db->prepare($sql);
+        if (!$stmt) {
+            throw new mysqli_sql_exception("Error al preparar verificación de permiso: " . $this->db->error);
+        }
+
+        $stmt->bind_param('ss', $userId, $url);
+        $stmt->execute();
+        $stmt->store_result();
+        $hasPermission = $stmt->num_rows > 0;
+        $stmt->close();
+
+        return $hasPermission;
+    }
+}

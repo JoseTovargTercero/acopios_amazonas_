@@ -1,0 +1,7 @@
+/vendor/
+.env
+env
+composer.lock
+composer.lock
+service-account.json
+/uploads

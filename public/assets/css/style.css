@@ -1,0 +1,80 @@
+/* 3.2 Validación de Formularios */
+.form-control.error,
+.form-select.error,
+.form-control.error:hover,
+.form-select.error:hover {
+  border-color: #e74c3c; /* Rojo */
+}
+
+.error-message {
+  color: #e74c3c; /* Rojo */
+  font-size: 0.9em;
+  margin-top: 5px;
+  min-height: 1em;
+  /* añadir efecto */
+  transition: opacity 0.3s ease-in-out;
+}
+
+.label {
+  color: #6b7280;
+  font-size: 0.875rem;
+  display: block;
+  margin-bottom: 0.125rem;
+}
+
+.value {
+  font-weight: 600;
+  color: #111827;
+}
+
+/* notificaciones */
+
+.notification-button.active {
+  background-color: #00acbf20;
+  color: var(--color-secondary) !important;
+  border: none !important;
+}
+
+.notification-button {
+  color: var(--color-secondary) !important;
+  border-radius: 3rem !important;
+  font-weight: bold;
+  border: none !important;
+}
+
+.notification-button:hover,
+.notification-button:focus,
+.notification-button:active {
+  border: none !important;
+}
+
+/* Estilos para las notificaciones no leídas */
+.notification-unread {
+  /* Un color de fondo sutil para diferenciar */
+  background-color: #eff8ff !important;
+}
+
+.notification-unread .noti-item-title {
+  /* Hacemos el título más grueso para que resalte */
+  font-weight: 600 !important;
+}
+
+.notification-list .noti-icon-badge {
+  height: inherit !important;
+
+  width: inherit !important;
+}
+
+.page-title-box .page-title-right {
+  display: block !important;
+}
+
+.carousel-control-next, .carousel-control-prev{
+  background-color: #a1a1a1d2 !important;
+}
+
+
+.carousel-item img{
+  height: 500px !important;
+  object-fit: contain;
+}

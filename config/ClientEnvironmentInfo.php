@@ -1,0 +1,202 @@
+<?php
+
+// ==================================================================
+    // [CRÍTICO] Cargar el Autoloader de Composer para librerías externas
+    // (Esto soluciona el error de GeoIp2)
+    // ==================================================================
+    if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
+        require_once __DIR__ . '/../vendor/autoload.php';
+    } else {
+        // Fallback por si la carpeta vendor está en otro nivel
+        require_once __DIR__ . '/../../vendor/autoload.php'; 
+    }
+use GeoIp2\Database\Reader;
+
+final class ClientEnvironmentInfo
+{
+    private string $userAgent;
+    private string $geoDbPath;
+
+    public function __construct(string $geoDbPath = '')
+    {
+        $this->userAgent = $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown';
+
+        if (empty($geoDbPath)) {
+            $geoDbPath = APP_ROOT . '/config/geolite.mmdb';
+        }
+
+        $this->geoDbPath = $geoDbPath;
+    }
+
+    public function getCurrentDatetime(): string
+    {
+        $tz = new \DateTimeZone($this->getTimezoneRegion());
+        return (new \DateTime('now', $tz))->format('Y-m-d H:i:s');
+    }
+
+    public function getTimezoneRegion(): string
+    {
+        return $_SESSION['timezone'] ?? 'America/Caracas';
+    }
+
+    public function getClientIp(): string
+    {
+        // Puedes ampliar esta lógica si usas proxies/reverse proxies
+        // (X-Forwarded-For, etc.) según tu entorno.
+        return $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+    }
+
+    public function getClientHostname(): string
+    {
+        return gethostbyaddr($this->getClientIp());
+    }
+
+    public function getUserAgent(): string
+    {
+        return $this->userAgent;
+    }
+
+    public function getClientOs(): string
+    {
+        $ua = strtolower($this->userAgent);
+        $osArray = [
+            'windows nt 10.0' => 'Windows 10',
+            'mac os x'        => 'Mac OS X',
+            'linux'           => 'Linux',
+            'android'         => 'Android',
+            'iphone'          => 'iPhone',
+            'ipad'            => 'iPad',
+            'ubuntu'          => 'Ubuntu',
+            'cros'            => 'Chrome OS'
+        ];
+
+        foreach ($osArray as $key => $label) {
+            if ($this->contains($ua, $key)) {
+                return $label;
+            }
+        }
+        return 'Unknown OS';
+    }
+
+    public function getClientBrowser(): string
+    {
+        $ua = strtolower($this->userAgent);
+        $browserArray = [
+            'edg'     => 'Microsoft Edge',
+            'opr'     => 'Opera',
+            'opera'   => 'Opera',
+            'chrome'  => 'Google Chrome',
+            'safari'  => 'Safari',
+            'firefox' => 'Mozilla Firefox',
+            'msie'    => 'Internet Explorer',
+            'trident' => 'Internet Explorer'
+        ];
+
+        foreach ($browserArray as $key => $label) {
+            if ($this->contains($ua, $key)) {
+                return $label;
+            }
+        }
+        return 'Unknown Browser';
+    }
+
+    public function getDomainName(): string
+    {
+        return $_SERVER['HTTP_HOST'] ?? 'localhost';
+    }
+
+    public function getRequestUri(): string
+    {
+        return $_SERVER['REQUEST_URI'] ?? 'unknown';
+    }
+
+    public function getServerHostname(): string
+    {
+        return gethostname();
+    }
+
+    public function getGeoInfo(): array
+    {
+        $ip = $this->getClientIp();
+        try {
+            $reader = new Reader($this->geoDbPath);
+            $record = $reader->city($ip);
+
+            $country = $record->country->name ?? 'Unknown';
+            $region  = isset($record->subdivisions[0]) ? ($record->subdivisions[0]->name ?? 'Unknown') : 'Unknown';
+            $city    = $record->city->name ?? 'Unknown';
+            $zip     = $record->postal->code ?? 'Unknown';
+            $lat     = $record->location->latitude ?? 0.0;
+            $lon     = $record->location->longitude ?? 0.0;
+
+            return [
+                'client_country'     => $country,
+                'client_region'      => $region,
+                'client_city'        => $city,
+                'client_zipcode'     => $zip,
+                'client_coordinates' => $lat . ',' . $lon
+            ];
+        } catch (\Exception $e) {
+            return [
+                'client_country'     => 'Unknown',
+                'client_region'      => 'Unknown',
+                'client_city'        => 'Unknown',
+                'client_zipcode'     => 'Unknown',
+                'client_coordinates' => '0.0,0.0'
+            ];
+        }
+    }
+
+    public function applyAuditContext(\mysqli $mysqli, $userId): void
+    {
+        require_once APP_ROOT . '/helpers/session_timezone_helper.php';
+
+        $geo = $this->getGeoInfo();
+
+        // Obtener zona horaria y timestamp local basado en geo-ip
+        $geoTimezone = getTimezoneFromLocation(
+            $geo['client_country'] ?? '',
+            $geo['client_region'] ?? '',
+            $geo['client_city'] ?? ''
+        );
+        $geoTimestamp = getNowInUserLocalTime(
+            $geo['client_country'] ?? '',
+            $geo['client_region'] ?? '',
+            $geo['client_city'] ?? ''
+        );
+
+        $vars = [
+            'user_id'          => $userId,
+            'user_type'        => $_SESSION['nivel'] ?? 'Unknown',
+            'full_name'        => $_SESSION['nombre'] ?? 'Unknown',
+            'client_ip'        => $this->getClientIp(),
+            'client_hostname'  => $this->getClientHostname(),
+            'user_agent'       => $this->getUserAgent(),
+            'client_os'        => $this->getClientOs(),
+            'client_browser'   => $this->getClientBrowser(),
+            'domain_name'      => $this->getDomainName(),
+            'request_uri'      => $this->getRequestUri(),
+            'server_hostname'  => $this->getServerHostname(),
+            'action_timezone'  => $this->getTimezoneRegion(),
+            'geo_ip_timezone'  => $geoTimezone,
+            'geo_ip_timestamp' => $geoTimestamp
+        ] + $geo;
+
+        foreach ($vars as $key => $value) {
+            $value     = (string)$value;
+            $safeValue = $mysqli->real_escape_string($value);
+            $mysqli->query("SET @{$key} = '{$safeValue}'");
+        }
+    }
+
+    /**
+     * Polyfill interno para PHP 7.4 (equivalente a str_contains de PHP 8).
+     */
+    private function contains(string $haystack, string $needle): bool
+    {
+        if ($needle === '') {
+            return true;
+        }
+        return strpos($haystack, $needle) !== false;
+    }
+}

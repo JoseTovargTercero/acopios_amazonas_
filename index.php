@@ -1,5 +1,8 @@
 <?php
-
+// Habilitar la visualización de todos los errores de PHP
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 require_once __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/middlewares/AuthMiddleware.php';
 require_once __DIR__ . '/middlewares/SessionRedirectMiddleware.php';
@@ -15,6 +18,7 @@ require_once __DIR__ . '/controllers/AlertaController.php';
 require_once __DIR__ . '/controllers/NotificationController.php';
 require_once __DIR__ . '/controllers/EmpresaController.php';
 require_once __DIR__ . '/controllers/DonacionController.php';
+
 use App\Core\ViewRenderer;
 
 use App\Router;

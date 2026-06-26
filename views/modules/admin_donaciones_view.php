@@ -67,7 +67,10 @@
                 <div class="row mt-3">
                     <div class="col-md-8 mb-3">
                         <div class="card shadow-sm border-0 h-100">
-                            <div class="card-header bg-white fw-bold"><i class="mdi mdi-chart-bar text-primary me-1"></i> Insumos por Categoría</div>
+                            <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                <span><i class="mdi mdi-chart-bar text-primary me-1"></i> Insumos por Categoría</span>
+                                <div id="filtroCategoriasChart" class="d-flex flex-wrap gap-1"></div>
+                            </div>
                             <div class="card-body">
                                 <canvas id="chartCategorias" height="250"></canvas>
                             </div>

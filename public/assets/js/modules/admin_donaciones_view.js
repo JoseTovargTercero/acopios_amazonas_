@@ -173,8 +173,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const catLabels = Object.keys(conteoCategorias);
       const catValues = Object.values(conteoCategorias);
+      const filtroCatsContainer = document.getElementById("filtroCategoriasChart");
       if (document.getElementById("chartCategorias")) {
-        charts.chartCategorias = new Chart(
+        const catChartRef = new Chart(
           document.getElementById("chartCategorias"),
           {
             type: "bar",
@@ -183,7 +184,7 @@ document.addEventListener("DOMContentLoaded", () => {
               datasets: [
                 {
                   label: "Cantidad",
-                  data: catValues,
+                  data: catValues.slice(),
                   backgroundColor: getColors(catLabels.length),
                   borderRadius: 4,
                 },
@@ -209,6 +210,36 @@ document.addEventListener("DOMContentLoaded", () => {
             },
           },
         );
+        charts.chartCategorias = catChartRef;
+
+        const origValues = catValues.slice();
+        const hidden = new Set();
+        if (filtroCatsContainer) {
+          filtroCatsContainer.innerHTML = catLabels
+            .map(
+              (lbl) =>
+                `<span class="badge rounded-pill cat-toggle active" data-cat="${lbl}" style="cursor:pointer;background:#4e73df;color:#fff;padding:4px 10px;font-size:0.8rem">${lbl}</span>`,
+            )
+            .join("");
+          filtroCatsContainer.querySelectorAll(".cat-toggle").forEach((el) => {
+            el.addEventListener("click", () => {
+              const lbl = el.dataset.cat;
+              const idx = catLabels.indexOf(lbl);
+              if (hidden.has(lbl)) {
+                hidden.delete(lbl);
+                catChartRef.data.datasets[0].data[idx] = origValues[idx];
+                el.style.background = "#4e73df";
+                el.style.color = "#fff";
+              } else {
+                hidden.add(lbl);
+                catChartRef.data.datasets[0].data[idx] = null;
+                el.style.background = "#e9ecef";
+                el.style.color = "#6c757d";
+              }
+              catChartRef.update();
+            });
+          });
+        }
       }
 
       if (document.getElementById("chartPresentacion")) {

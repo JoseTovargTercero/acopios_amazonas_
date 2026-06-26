@@ -19,9 +19,13 @@ class Database
 
         $this->loadEnv(APP_ROOT . '/.env');
 
+        // verifica si es localhost
+
         $host = 'localhost';
         $dbname = 'acopio';
+        //$username = 'root';
         $username = 'acopio_user';
+        //$password =  '';
         $password =  'd{adu7O~Hygc';
 
         // Definimos estas constantes solo si no existen, para evitar notificaciones de "Constant already defined"

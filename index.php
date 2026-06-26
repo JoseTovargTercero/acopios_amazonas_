@@ -92,6 +92,10 @@ $router->group(['prefix' => '/api'], function ($router) {
     $router->post('/donaciones', ['controlador' => \App\Controllers\DonacionController::class, 'accion' => 'crear']);
     $router->get('/donaciones', ['controlador' => \App\Controllers\DonacionController::class, 'accion' => 'listar']);
     $router->get('/admin_donaciones', ['controlador' => \App\Controllers\DonacionController::class, 'accion' => 'listarTodas']);
+    $router->delete('/admin_donaciones/{id}', ['controlador' => \App\Controllers\DonacionController::class, 'accion' => 'eliminar']);
+    $router->put('/admin_insumos', ['controlador' => \App\Controllers\DonacionController::class, 'accion' => 'actualizarInsumo']);
+    $router->get('/admin_categorias', ['controlador' => \App\Controllers\DonacionController::class, 'accion' => 'listarCategorias']);
+    $router->put('/admin_categorias/renombrar', ['controlador' => \App\Controllers\DonacionController::class, 'accion' => 'renombrarCategoria']);
 
 
     // endpoints de usuarios

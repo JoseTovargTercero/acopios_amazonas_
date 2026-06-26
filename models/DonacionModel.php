@@ -130,6 +130,63 @@ class DonacionModel
         return $donacionesRes;
     }
 
+    public function listarCategoriasDistinct(): array
+    {
+        $sql = "SELECT DISTINCT categoria FROM insumos ORDER BY categoria";
+        $res = $this->db->query($sql);
+        $rows = $res->fetch_all(MYSQLI_ASSOC);
+        return array_map(fn($r) => $r['categoria'], $rows);
+    }
+
+    public function renombrarCategoria(string $vieja, string $nueva): array
+    {
+        $sql = "UPDATE insumos SET categoria = ? WHERE categoria = ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bind_param('ss', $nueva, $vieja);
+        if ($stmt->execute()) {
+            $afectados = $stmt->affected_rows;
+            $stmt->close();
+            return ['ok' => true, 'afectados' => $afectados];
+        }
+        $stmt->close();
+        return ['ok' => false, 'message' => 'Error al renombrar categoría.'];
+    }
+
+    public function actualizarInsumo(int $idInsumo, string $categoria, string $descripcion): array
+    {
+        $sql = "UPDATE insumos SET categoria = ?, descripcion_insumo = ? WHERE id_insumo = ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bind_param('ssi', $categoria, $descripcion, $idInsumo);
+        if ($stmt->execute()) {
+            $stmt->close();
+            return ['ok' => true];
+        }
+        $stmt->close();
+        return ['ok' => false, 'message' => 'Error al actualizar el insumo.'];
+    }
+
+    public function eliminar(int $idDonacion): array
+    {
+        $this->db->begin_transaction();
+        try {
+            $stmt = $this->db->prepare("DELETE FROM insumos WHERE id_donacion = ?");
+            $stmt->bind_param('i', $idDonacion);
+            $stmt->execute();
+            $stmt->close();
+
+            $stmt = $this->db->prepare("DELETE FROM donacion WHERE id_donacion = ?");
+            $stmt->bind_param('i', $idDonacion);
+            $stmt->execute();
+            $stmt->close();
+
+            $this->db->commit();
+            return ['ok' => true];
+        } catch (\Exception $e) {
+            $this->db->rollback();
+            return ['ok' => false, 'message' => $e->getMessage()];
+        }
+    }
+
     public function listarTodas(): array
     {
         $sql = "SELECT d.*, c.nombre as centro_nombre 

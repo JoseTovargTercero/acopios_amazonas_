@@ -742,6 +742,40 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  const btnTopAlimentos = document.getElementById("btnTopAlimentos");
+  if (btnTopAlimentos) {
+    btnTopAlimentos.addEventListener("click", () => {
+      if (!historialCompleto || historialCompleto.length === 0) return;
+      let maxKg = -1;
+      let topDon = null;
+      historialCompleto.forEach((don) => {
+        let kgAlim = 0;
+        if (don.insumos) {
+          don.insumos.forEach((ins) => {
+            if ((ins.categoria || "").toUpperCase() === "ALIMENTOS") {
+              kgAlim += calcularPeso(ins);
+            }
+          });
+        }
+        if (kgAlim > maxKg) {
+          maxKg = kgAlim;
+          topDon = don;
+        }
+      });
+      if (!topDon || maxKg <= 0) {
+        showErrorToast({ message: "No se encontraron donaciones con alimentos." });
+        return;
+      }
+      renderHistorial([topDon]);
+      const inputBuscar = document.getElementById("buscadorInsumo");
+      if (inputBuscar) inputBuscar.value = "";
+      setTimeout(() => {
+        const card = document.querySelector(`[data-donacion-id="${topDon.id_donacion}"]`);
+        if (card) card.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 150);
+    });
+  }
+
   if (btnExportarExcel) {
     btnExportarExcel.addEventListener("click", () => {
       if (donacionesData.length === 0) return;

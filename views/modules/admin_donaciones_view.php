@@ -116,9 +116,14 @@
                         <i class="mdi mdi-inbox-outline text-muted" style="font-size: 4rem;"></i>
                         <h4 class="mt-2 text-muted">No hay donaciones en el sistema</h4>
                     </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
+                    <div class="row mb-3 align-items-end">
+                        <div class="col-md-5">
                             <input type="text" class="form-control" id="buscadorInsumo" placeholder="Buscar insumo por categoría o descripción...">
+                        </div>
+                        <div class="col-md-3">
+                            <button type="button" class="btn btn-outline-warning w-100" id="btnTopAlimentos">
+                                <i class="mdi mdi-poll me-1"></i> Mayor Kg Alimentos
+                            </button>
                         </div>
                     </div>
                     <div id="accordionDonaciones" class="accordion custom-accordion d-none"></div>

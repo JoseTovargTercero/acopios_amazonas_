@@ -15,7 +15,8 @@ class DonacionModel
         $this->db->begin_transaction();
         
         try {
-            $guiaRemision = !empty($donacion['numero_guia_remision']) ? $donacion['numero_guia_remision'] : null;
+            $rawGuia = $donacion['numero_guia_remision'] ?? '';
+            $guiaRemision = ($rawGuia !== '' && strtoupper($rawGuia) !== 'N/A') ? $rawGuia : null;
             $transportista = !empty($donacion['nombre_transportista']) ? $donacion['nombre_transportista'] : null;
             $placa = !empty($donacion['placa_vehiculo']) ? $donacion['placa_vehiculo'] : null;
 

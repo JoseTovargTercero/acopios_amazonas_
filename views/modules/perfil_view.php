@@ -44,10 +44,6 @@
                                         <input type="datetime-local" class="form-control" id="fecha_hora_llegada" name="fecha_hora_llegada" required>
                                         <div class="invalid-feedback">Por favor, indique la fecha y hora.</div>
                                     </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label for="numero_guia_remision" class="form-label fw-bold">Número Guía de Remisión</label>
-                                        <input type="text" class="form-control" id="numero_guia_remision" name="numero_guia_remision" maxlength="50" placeholder="Ej: 001-002-000000001">
-                                    </div>
                                 </div>
 
                                 <div class="mb-3">
@@ -56,16 +52,12 @@
                                     <div class="invalid-feedback">Por favor, indique la organización donante.</div>
                                 </div>
 
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label for="nombre_transportista" class="form-label fw-bold">Nombre del Transportista</label>
-                                        <input type="text" class="form-control" id="nombre_transportista" name="nombre_transportista" maxlength="100" placeholder="Nombre del conductor">
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label for="placa_vehiculo" class="form-label fw-bold">Placa del Vehículo</label>
-                                        <input type="text" class="form-control" id="placa_vehiculo" name="placa_vehiculo" maxlength="20" placeholder="Ej: ABC-1234">
-                                    </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="nombre_transportista" class="form-label fw-bold">Nombre del Transportista</label>
+                                    <input type="text" class="form-control" id="nombre_transportista" name="nombre_transportista" maxlength="100" placeholder="Nombre del conductor">
                                 </div>
+                            </div>
 
                                 <div class="text-end mt-4">
                                     <button type="button" class="btn btn-primary px-4 rounded-pill fw-bold" id="btnNextStep">Siguiente Paso <i class="mdi mdi-arrow-right ms-1"></i></button>
@@ -110,10 +102,6 @@
                                         <label class="form-label fw-bold" id="lbl-man">Cant. Manifestada <span class="text-danger">*</span></label>
                                         <input type="number" class="form-control form-control-sm" id="ins_manifestada" value="1" min="0">
                                     </div>
-                                    <div class="col-md-3 mb-2">
-                                        <label class="form-label fw-bold" id="lbl-rec">Cant. Recibida <span class="text-danger">*</span></label>
-                                        <input type="number" class="form-control form-control-sm" id="ins_recibida" value="1" min="0">
-                                    </div>
                                     <div class="col-md-4 mb-2">
                                         <label class="form-label fw-bold">Estado <span class="text-danger">*</span></label>
                                         <input type="text" class="form-control form-control-sm" id="ins_estado" placeholder="Ej: Buen estado" value="Buen estado">
@@ -133,14 +121,13 @@
                                                 <th>Descripción</th>
                                                 <th>Present.</th>
                                                 <th class="text-center">Cant. Manif.</th>
-                                                <th class="text-center">Cant. Recibida</th>
                                                 <th>Estado</th>
                                                 <th class="text-center">Acción</th>
                                             </tr>
                                         </thead>
                                         <tbody id="tablaInsumos">
                                             <tr>
-                                                <td colspan="7" class="text-center text-muted">Aún no se han agregado insumos.</td>
+                                                <td colspan="6" class="text-center text-muted">Aún no se han agregado insumos.</td>
                                             </tr>
                                         </tbody>
                                     </table>

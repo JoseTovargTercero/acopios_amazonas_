@@ -15,22 +15,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const divSoloCaja = document.getElementById('solo_para_caja');
     const inputUnidades = document.getElementById('ins_unidades');
     const lblMan = document.getElementById('lbl-man');
-    const lblRec = document.getElementById('lbl-rec');
 
     function actualizarLabels() {
         if (selPresentacion.value === 'caja') {
             lblMan.childNodes[0].textContent = 'Cajas Manifestadas ';
-            lblRec.childNodes[0].textContent = 'Cajas Recibidas ';
             divSoloCaja.style.display = '';
         } else {
             lblMan.childNodes[0].textContent = 'Unidades Manifestadas ';
-            lblRec.childNodes[0].textContent = 'Unidades Recibidas ';
             divSoloCaja.style.display = 'none';
             inputUnidades.value = '1';
         }
     }
 
-    if (selPresentacion && divSoloCaja && inputUnidades && lblMan && lblRec) {
+    if (selPresentacion && divSoloCaja && inputUnidades && lblMan) {
         actualizarLabels();
         selPresentacion.addEventListener('change', actualizarLabels);
     }
@@ -67,10 +64,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const formData = new FormData(formDonacionWizard);
             dataDonacion = {
                 fecha_hora_llegada: formData.get('fecha_hora_llegada'),
-                numero_guia_remision: formData.get('numero_guia_remision'),
+                numero_guia_remision: 'N/A',
                 organizacion_donante: formData.get('organizacion_donante'),
                 nombre_transportista: formData.get('nombre_transportista'),
-                placa_vehiculo: formData.get('placa_vehiculo')
+                placa_vehiculo: 'N/A'
             };
 
             switchTab('#step2');
@@ -87,7 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Renderizar la tabla de insumos en el Paso 2
     const renderTable = () => {
         if (insumos.length === 0) {
-            tablaInsumos.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-3">Aún no se han agregado insumos.</td></tr>`;
+            tablaInsumos.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-3">Aún no se han agregado insumos.</td></tr>`;
             btnFinalizar.disabled = true;
             return;
         }
@@ -102,7 +99,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td>${item.descripcion_insumo}</td>
                 <td class="text-capitalize">${item.presentacion}</td>
                 <td class="text-center">${item.cantidad_manifestada}</td>
-                <td class="text-center">${item.cantidad_recibida}</td>
                 <td>${item.estado}</td>
                 <td class="text-center">
                     <button type="button" class="btn btn-sm btn-danger btn-delete-insumo" data-index="${index}">
@@ -133,7 +129,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const peso = parseFloat(document.getElementById('ins_peso').value) || 0.0;
             const vencimiento = document.getElementById('ins_vencimiento').value;
             const manifestada = parseInt(document.getElementById('ins_manifestada').value) || 0;
-            const recibida = parseInt(document.getElementById('ins_recibida').value) || 0;
             const estado = document.getElementById('ins_estado').value.trim();
 
             if (!categoria || !descripcion || !estado) {
@@ -141,8 +136,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            if (manifestada < 0 || recibida < 0) {
-                showErrorToast({ message: "Las cantidades manifestadas o recibidas no pueden ser negativas." });
+            if (manifestada < 0) {
+                showErrorToast({ message: "La cantidad manifestada no puede ser negativa." });
                 return;
             }
 
@@ -153,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 unidades_por_presentacion: unidades,
                 peso_por_unidad: peso,
                 cantidad_manifestada: manifestada,
-                cantidad_recibida: recibida,
+                cantidad_recibida: manifestada,
                 estado,
                 fecha_vencimiento: vencimiento || null
             });
@@ -161,7 +156,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // Limpiar inputs clave para carga ágil
             document.getElementById('ins_descripcion').value = '';
             document.getElementById('ins_manifestada').value = '1';
-            document.getElementById('ins_recibida').value = '1';
             document.getElementById('ins_descripcion').focus();
 
             renderTable();

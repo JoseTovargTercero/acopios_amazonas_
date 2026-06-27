@@ -541,12 +541,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const buscarEnHistorial = () => {
     const termino = document.getElementById("buscadorInsumo").value.toLowerCase().trim();
     terminoBusqueda = termino;
-    let base = filtrarDonacionesPorFecha(historialCompleto);
     if (!termino) {
-      renderHistorial(base);
+      renderHistorial(historialCompleto);
       return;
     }
-    const filtradas = base
+    const filtradas = historialCompleto
       .map((don) => {
         if (!don.insumos || don.insumos.length === 0) return null;
         const insFiltrados = don.insumos.filter(
@@ -576,7 +575,7 @@ document.addEventListener("DOMContentLoaded", () => {
           donacionesData = donacionesData.filter((d) => d.id_donacion !== id);
           historialCompleto = historialCompleto.filter((d) => d.id_donacion !== id);
           aplicarFiltro();
-          renderHistorial(filtrarDonacionesPorFecha(historialCompleto));
+          renderHistorial(historialCompleto);
         } else {
           showErrorToast(response);
           if (card) card.style.opacity = "1";
@@ -607,10 +606,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const aplicarFiltro = () => {
     const id = parseInt(filtroCentro.value);
-    donacionesFiltradas =
+    let filtradas =
       id === 0
         ? donacionesData
         : donacionesData.filter((d) => parseInt(d.centro_acopio_id) === id);
+    donacionesFiltradas = filtrarDonacionesPorFecha(filtradas);
     renderDashboard(donacionesFiltradas);
   };
 
@@ -655,7 +655,7 @@ document.addEventListener("DOMContentLoaded", () => {
           historialCompleto = response.data;
           poblarFiltroCentros(donacionesData);
           aplicarFiltro();
-          renderHistorial(filtrarDonacionesPorFecha(historialCompleto));
+          renderHistorial(historialCompleto);
         } else {
           showErrorToast(response);
           loaderDash.innerHTML = `<p class="text-danger mt-3">Error: ${response.message || "Sin datos"}</p>`;
@@ -712,14 +712,14 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       if (fechaInputGroup) fechaInputGroup.classList.add("d-none");
     }
-    buscarEnHistorial();
+    aplicarFiltro();
   };
 
   if (selFecha) {
     selFecha.addEventListener("change", onFechaChange);
   }
   if (inputFecha) {
-    inputFecha.addEventListener("change", buscarEnHistorial);
+    inputFecha.addEventListener("change", aplicarFiltro);
   }
 
   const btnGestionCats = document.getElementById("btnGestionCategorias");

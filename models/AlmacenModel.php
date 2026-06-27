@@ -88,4 +88,41 @@ class AlmacenModel
             return ['ok' => false, 'message' => $e->getMessage()];
         }
     }
+
+    public function listarTodas(): array
+    {
+        $sql = "SELECT a.*, c.nombre as centro_nombre 
+                FROM almacen a
+                INNER JOIN centros c ON a.centro_acopio_id = c.id
+                ORDER BY a.fecha_hora_llegada DESC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        $almacenRes = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+
+        if (empty($almacenRes)) {
+            return [];
+        }
+
+        $ids = array_column($almacenRes, 'id_donacion');
+        $in = str_repeat('?,', count($ids) - 1) . '?';
+        $sqlIns = "SELECT * FROM almacen_insumos WHERE id_donacion IN ($in)";
+        $stmtIns = $this->db->prepare($sqlIns);
+        $types = str_repeat('i', count($ids));
+        $stmtIns->bind_param($types, ...$ids);
+        $stmtIns->execute();
+        $insumosRes = $stmtIns->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmtIns->close();
+
+        $insumosPorAlmacen = [];
+        foreach ($insumosRes as $ins) {
+            $insumosPorAlmacen[$ins['id_donacion']][] = $ins;
+        }
+
+        foreach ($almacenRes as &$a) {
+            $a['insumos'] = $insumosPorAlmacen[$a['id_donacion']] ?? [];
+        }
+
+        return $almacenRes;
+    }
 }

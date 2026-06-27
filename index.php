@@ -77,6 +77,7 @@ $router->group(['middleware' => LoginRequiredMiddleware::class], function ($rout
     $router->get('/perfil_almacen', ['vista' => 'modules/perfil_almacen_view', 'vistaData' => ['titulo' => 'Almacen']]);
     $router->get('/historial_donaciones', ['vista' => 'modules/historial_donaciones_view', 'vistaData' => ['titulo' => 'Historial de Donaciones']]);
     $router->get('/admin_donaciones', ['vista' => 'modules/admin_donaciones_view', 'vistaData' => ['titulo' => 'Administración General de Donaciones']]);
+    $router->get('/admin_almacen', ['vista' => 'modules/admin_almacen_view', 'vistaData' => ['titulo' => 'Administración General de Almacén']]);
     $router->get('/empresas', ['vista' => 'modules/empresas_view', 'vistaData' => ['titulo' => 'Empresas']]);
 });
 
@@ -92,6 +93,7 @@ $router->group(['prefix' => '/api'], function ($router) {
 
     // Almacén
     $router->post('/almacen', ['controlador' => \App\Controllers\AlmacenController::class, 'accion' => 'crear']);
+    $router->get('/admin_almacen', ['controlador' => \App\Controllers\AlmacenController::class, 'accion' => 'listarTodas']);
 
     // Donaciones
     $router->post('/donaciones', ['controlador' => \App\Controllers\DonacionController::class, 'accion' => 'crear']);

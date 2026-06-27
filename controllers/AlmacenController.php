@@ -20,6 +20,17 @@ class AlmacenController
         exit;
     }
 
+    public function listarTodas(): void
+    {
+        try {
+            $datos = $this->model->listarTodas();
+            $this->jsonResponse(true, 'Listado general obtenido correctamente.', $datos);
+        } catch (\Throwable $e) {
+            error_log("Error en AlmacenController::listarTodas: " . $e->getMessage());
+            $this->jsonResponse(false, 'Error al obtener el listado general.', null, 500);
+        }
+    }
+
     public function crear(): void
     {
         $input = json_decode(file_get_contents('php://input') ?: '', true) ?? [];

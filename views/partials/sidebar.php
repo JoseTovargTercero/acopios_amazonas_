@@ -17,6 +17,7 @@ if ($isLoggedIn) {
             ['nombre' => 'Nueva Donación', 'icono' => 'mdi mdi-plus-circle', 'url' => 'perfil', 'categoria' => 'Operaciones'],
             ['nombre' => 'Historial Donaciones', 'icono' => 'mdi mdi-format-list-bulleted', 'url' => 'historial_donaciones', 'categoria' => 'Operaciones'],
             ['nombre' => 'Admin Donaciones', 'icono' => 'mdi mdi-shield-crown', 'url' => 'admin_donaciones', 'categoria' => 'Administración'],
+            ['nombre' => 'Admin Almacén', 'icono' => 'mdi mdi-warehouse', 'url' => 'admin_almacen', 'categoria' => 'Administración'],
             ['nombre' => 'Cerrar Sesión', 'icono' => 'mdi mdi-logout', 'url' => 'api/logout', 'categoria' => 'General'],
         ];
     }

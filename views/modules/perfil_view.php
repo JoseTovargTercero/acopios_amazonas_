@@ -77,6 +77,8 @@
                                             <option value="ALIMENTO ANIMAL">Alimento animal</option>
                                             <option value="ARTÍCULOS DE LIMPIEZA">Artículos de limpieza</option>
                                             <option value="MEDICAMENTOS">Medicamentos</option>
+                                            <option value="HIGIENE PERSONAL">Higiene personal</option>
+
                                             <option value="INSUMOS MÉDICOS">Insumos médicos</option>
                                             <option value="BEBIDAS">Bebidas</option>
                                             <option value="LENCERÍAS">Lencerías</option>

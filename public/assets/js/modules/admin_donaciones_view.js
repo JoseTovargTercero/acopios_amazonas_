@@ -83,7 +83,6 @@ document.addEventListener("DOMContentLoaded", () => {
       let kilosAlimentos = 0;
       const centrosSet = new Set();
       const conteoCategorias = {};
-      const conteoPresentacion = { unidad: 0, caja: 0 };
       const donacionesPorMes = {};
       const donacionesPorCentro = {};
       let donaciones30d = 0;
@@ -109,8 +108,6 @@ document.addEventListener("DOMContentLoaded", () => {
           don.insumos.forEach((ins) => {
             totalInsumos++;
             const cat = (ins.categoria || "Sin categoría").trim().toUpperCase();
-            conteoPresentacion[ins.presentacion] =
-              (conteoPresentacion[ins.presentacion] || 0) + 1;
 
             if (cat === "ALIMENTOS") {
               const kg = Math.round(calcularPeso(ins));
@@ -243,19 +240,19 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       if (document.getElementById("chartPresentacion")) {
+        const catLabels = Object.keys(conteoCategorias);
+        const catValues = Object.values(conteoCategorias);
+        const catColors = getColors(catLabels.length);
         charts.chartPresentacion = new Chart(
           document.getElementById("chartPresentacion"),
           {
             type: "doughnut",
             data: {
-              labels: ["Unidad", "Caja"],
+              labels: catLabels,
               datasets: [
                 {
-                  data: [
-                    conteoPresentacion.unidad || 0,
-                    conteoPresentacion.caja || 0,
-                  ],
-                  backgroundColor: ["#4e73df", "#1cc88a"],
+                  data: catValues,
+                  backgroundColor: catColors,
                   borderWidth: 0,
                 },
               ],
@@ -264,6 +261,15 @@ document.addEventListener("DOMContentLoaded", () => {
               responsive: true,
               plugins: {
                 legend: { position: "bottom", labels: { padding: 12 } },
+                tooltip: {
+                  callbacks: {
+                    label: function (ctx) {
+                      const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                      const pct = total > 0 ? ((ctx.parsed / total) * 100).toFixed(1) : 0;
+                      return ctx.label + ": " + pct + "%";
+                    },
+                  },
+                },
               },
             },
           },

@@ -213,18 +213,26 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
 
+      let pesoFinal = peso;
       if (peso > 1) {
-        const confirm = await Swal.fire({
+        const result = await Swal.fire({
           title: "¿ Confirmas el peso?",
           html: `<b>El peso unitario es mayor a un KILO</b><br><br>
 ¿Vas a ingresar gramos? Usa decimales: <b>0.${peso}</b><br><br>
 ¡Atención! Debes registrar el peso individual de cada producto, no el peso total de la caja o paca..`,
           icon: "question",
+          showDenyButton: true,
           showCancelButton: true,
-          confirmButtonText: "Confirmar",
+          confirmButtonText: "Son Kilos",
+          denyButtonText: "Son Gramos",
           cancelButtonText: "Cancelar",
         });
-        if (!confirm.isConfirmed) return;
+        if (result.isDenied) {
+          pesoFinal = parseFloat("0." + peso);
+          document.getElementById("ins_peso").value = pesoFinal;
+        } else if (!result.isConfirmed) {
+          return;
+        }
       }
 
       insumos.push({
@@ -232,7 +240,7 @@ document.addEventListener("DOMContentLoaded", () => {
         descripcion_insumo: descripcion,
         presentacion,
         unidades_por_presentacion: unidades,
-        peso_por_unidad: peso,
+        peso_por_unidad: pesoFinal,
         cantidad_manifestada: manifestada,
         cantidad_recibida: manifestada,
         estado,

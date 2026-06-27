@@ -90,7 +90,7 @@
                     </div>
                     <div class="col-md-4 mb-3">
                         <div class="card shadow-sm border-0 h-100">
-                            <div class="card-header bg-white fw-bold"><i class="mdi mdi-chart-donut text-primary me-1"></i> Presentación</div>
+                            <div class="card-header bg-white fw-bold"><i class="mdi mdi-chart-donut text-primary me-1"></i> Categorías %</div>
                             <div class="card-body">
                                 <canvas id="chartPresentacion" height="250"></canvas>
                             </div>

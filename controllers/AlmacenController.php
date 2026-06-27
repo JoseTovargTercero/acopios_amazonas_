@@ -60,7 +60,7 @@ class AlmacenController
             $this->jsonResponse(true, 'Ingreso a almacén y ' . count($insumos) . ' insumo(s) registrados correctamente.', ['id_almacen' => $result['id_almacen']]);
         } catch (\Throwable $e) {
             error_log("Error en AlmacenController::crear: " . $e->getMessage());
-            $this->jsonResponse(false, 'Ocurrió un error al registrar el ingreso.', null, 500);
+            $this->jsonResponse(false, $e->getMessage(), null, 500);
         }
     }
 }

@@ -49,7 +49,7 @@ class DonacionController
             $this->jsonResponse(true, 'Donación y ' . count($insumos) . ' insumo(s) registrados correctamente.', ['id_donacion' => $result['id_donacion']]);
         } catch (\Throwable $e) {
             error_log("Error en DonacionController::crear: " . $e->getMessage());
-            $this->jsonResponse(false, 'Ocurrió un error al registrar la donación.', null, 500);
+            $this->jsonResponse(false, $e->getMessage(), null, 500);
         }
     }
 

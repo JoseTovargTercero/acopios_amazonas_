@@ -117,7 +117,19 @@
                         <h4 class="mt-2 text-muted">No hay donaciones en el sistema</h4>
                     </div>
                     <div class="row mb-3 align-items-end">
-                        <div class="col-md-5">
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold small">Filtrar por fecha</label>
+                            <select class="form-select form-select-sm" id="filtroFecha">
+                                <option value="hoy">Hoy</option>
+                                <option value="especifica">Fecha específica</option>
+                                <option value="todas">Todas</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-none" id="filtroFechaInputGroup">
+                            <label class="form-label fw-bold small">Seleccionar fecha</label>
+                            <input type="date" class="form-control form-control-sm" id="filtroFechaInput">
+                        </div>
+                        <div class="col-md-4">
                             <input type="text" class="form-control" id="buscadorInsumo" placeholder="Buscar insumo por categoría o descripción...">
                         </div>
                         <div class="col-md-3">

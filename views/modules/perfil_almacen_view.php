@@ -70,6 +70,7 @@
                                             <option value="ALIMENTOS">Alimentos</option>
                                             <option value="ALIMENTO ANIMAL">Alimento animal</option>
                                             <option value="ARTÍCULOS DE LIMPIEZA">Artículos de limpieza</option>
+                                            <option value="MEDICAMENTOS">Medicamentos</option>
                                             <option value="INSUMOS MÉDICOS">Insumos médicos</option>
                                             <option value="BEBIDAS">Bebidas</option>
                                             <option value="LENCERÍAS">Lencerías</option>
@@ -77,6 +78,7 @@
                                             <option value="PRODUCTOS PLÁSTICOS">Productos plásticos</option>
                                             <option value="HERRAMIENTAS MENORES">Herramientas menores</option>
                                             <option value="EQUIPOS DE PROTECCIÓN PERSONAL">Equipos de protección personal</option>
+                                            <option value="ROPA">Ropa</option>
                                             <option value="AGUA">Agua</option>
                                             <option value="otro">Otro</option>
                                         </select>

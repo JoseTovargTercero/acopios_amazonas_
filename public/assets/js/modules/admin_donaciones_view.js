@@ -354,8 +354,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const renderHistorial = (donaciones) => {
     loader.classList.add("d-none");
-    donacionesData = donaciones;
-    historialCompleto = donaciones;
 
     if (!donaciones || donaciones.length === 0) {
       noData.classList.remove("d-none");
@@ -543,11 +541,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const buscarEnHistorial = () => {
     const termino = document.getElementById("buscadorInsumo").value.toLowerCase().trim();
     terminoBusqueda = termino;
+    let base = filtrarDonacionesPorFecha(historialCompleto);
     if (!termino) {
-      renderHistorial(historialCompleto);
+      renderHistorial(base);
       return;
     }
-    const filtradas = historialCompleto
+    const filtradas = base
       .map((don) => {
         if (!don.insumos || don.insumos.length === 0) return null;
         const insFiltrados = don.insumos.filter(
@@ -575,8 +574,9 @@ document.addEventListener("DOMContentLoaded", () => {
             message: response.message || "Donación eliminada",
           });
           donacionesData = donacionesData.filter((d) => d.id_donacion !== id);
+          historialCompleto = historialCompleto.filter((d) => d.id_donacion !== id);
           aplicarFiltro();
-          renderHistorial(donacionesData);
+          renderHistorial(filtrarDonacionesPorFecha(historialCompleto));
         } else {
           showErrorToast(response);
           if (card) card.style.opacity = "1";
@@ -614,6 +614,34 @@ document.addEventListener("DOMContentLoaded", () => {
     renderDashboard(donacionesFiltradas);
   };
 
+  const getDateFilterValue = () => {
+    const sel = document.getElementById("filtroFecha");
+    if (!sel) return "hoy";
+    return sel.value;
+  };
+
+  const getCustomDate = () => {
+    const input = document.getElementById("filtroFechaInput");
+    return input ? input.value : "";
+  };
+
+  const filtrarDonacionesPorFecha = (list) => {
+    const mode = getDateFilterValue();
+    if (mode === "todas") return list;
+    let targetDate;
+    if (mode === "hoy") {
+      const d = new Date();
+      targetDate = d.toISOString().slice(0, 10);
+    } else {
+      targetDate = getCustomDate();
+      if (!targetDate) return list;
+    }
+    return list.filter((d) => {
+      const created = (d.created_at || "").slice(0, 10);
+      return created === targetDate;
+    });
+  };
+
   const fetchDonacionesGlobales = () => {
     loaderDash.classList.remove("d-none");
     dashboardContent.classList.add("d-none");
@@ -624,9 +652,10 @@ document.addEventListener("DOMContentLoaded", () => {
       success: (response) => {
         if (response.value && Array.isArray(response.data)) {
           donacionesData = response.data;
+          historialCompleto = response.data;
           poblarFiltroCentros(donacionesData);
           aplicarFiltro();
-          renderHistorial(donacionesData);
+          renderHistorial(filtrarDonacionesPorFecha(historialCompleto));
         } else {
           showErrorToast(response);
           loaderDash.innerHTML = `<p class="text-danger mt-3">Error: ${response.message || "Sin datos"}</p>`;
@@ -666,6 +695,31 @@ document.addEventListener("DOMContentLoaded", () => {
   const inputBuscar = document.getElementById("buscadorInsumo");
   if (inputBuscar) {
     inputBuscar.addEventListener("input", buscarEnHistorial);
+  }
+
+  const selFecha = document.getElementById("filtroFecha");
+  const inputFecha = document.getElementById("filtroFechaInput");
+  const fechaInputGroup = document.getElementById("filtroFechaInputGroup");
+
+  const onFechaChange = () => {
+    if (selFecha.value === "especifica") {
+      if (fechaInputGroup) {
+        fechaInputGroup.classList.remove("d-none");
+      }
+      if (inputFecha && !inputFecha.value) {
+        inputFecha.value = new Date().toISOString().slice(0, 10);
+      }
+    } else {
+      if (fechaInputGroup) fechaInputGroup.classList.add("d-none");
+    }
+    buscarEnHistorial();
+  };
+
+  if (selFecha) {
+    selFecha.addEventListener("change", onFechaChange);
+  }
+  if (inputFecha) {
+    inputFecha.addEventListener("change", buscarEnHistorial);
   }
 
   const btnGestionCats = document.getElementById("btnGestionCategorias");
@@ -847,5 +901,9 @@ document.addEventListener("DOMContentLoaded", () => {
         `Donaciones_Globales_${new Date().toISOString().slice(0, 10)}.xlsx`,
       );
     });
+  }
+
+  if (inputFecha && !inputFecha.value) {
+    inputFecha.value = new Date().toISOString().slice(0, 10);
   }
 });

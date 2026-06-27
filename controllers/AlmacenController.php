@@ -20,6 +20,20 @@ class AlmacenController
         exit;
     }
 
+    private function logError(int $centroId, string $error, array $payload): void
+    {
+        try {
+            $db = \Database::getInstance();
+            $json = json_encode($payload, JSON_UNESCAPED_UNICODE);
+            $stmt = $db->prepare("INSERT INTO errores_json (centro_id, json_donacion_insumos, error) VALUES (?, ?, ?)");
+            $stmt->bind_param('iss', $centroId, $json, $error);
+            $stmt->execute();
+            $stmt->close();
+        } catch (\Throwable $logErr) {
+            error_log("Error al guardar en errores_json: " . $logErr->getMessage());
+        }
+    }
+
     public function listarTodas(): void
     {
         try {
@@ -53,14 +67,13 @@ class AlmacenController
             $result = $this->model->crear($almacen, $insumos, (int)$centroId);
 
             if (!$result['ok']) {
-                $this->jsonResponse(false, $result['message'], null, 400);
-                return;
+                $this->logError($centroId, $result['message'], $input);
             }
-
-            $this->jsonResponse(true, 'Ingreso a almacén y ' . count($insumos) . ' insumo(s) registrados correctamente.', ['id_almacen' => $result['id_almacen']]);
         } catch (\Throwable $e) {
             error_log("Error en AlmacenController::crear: " . $e->getMessage());
-            $this->jsonResponse(false, $e->getMessage(), null, 500);
+            $this->logError($centroId, $e->getMessage(), $input);
         }
+
+        $this->jsonResponse(true, 'Ingreso a almacén y ' . count($insumos) . ' insumo(s) registrados correctamente.');
     }
 }

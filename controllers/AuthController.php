@@ -41,6 +41,7 @@ class AuthController
             $_SESSION['user_id']   = $centro['id'];
             $_SESSION['nombre']    = $centro['nombre'];
             $_SESSION['codigo']    = $centro['codigo'];
+            $_SESSION['tipo']      = $centro['tipo'] ?? null;
 
             $this->json(true, 'Inicio de sesión exitoso.', [
                 'id'     => $centro['id'],

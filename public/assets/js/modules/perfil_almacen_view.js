@@ -1,14 +1,13 @@
 import { showErrorToast, Toast } from "../helpers/helpers.js";
 
-const STORAGE_KEY = "perfil_insumos_draft";
-
 document.addEventListener("DOMContentLoaded", () => {
   const btnNextStep = document.getElementById("btnNextStep");
   const btnPrevStep = document.getElementById("btnPrevStep");
   const btnFinalizar = document.getElementById("btnFinalizar");
   const btnAddInsumo = document.getElementById("btnAddInsumo");
-  const formDonacionWizard = document.getElementById("formDonacionWizard");
+  const formWizard = document.getElementById("formDonacionWizard");
   const inputFechaHora = document.getElementById("fecha_hora_llegada");
+  const tabStep2Link = document.getElementById("tabStep2");
   const tablaInsumos = document.getElementById("tablaInsumos");
 
   const selPresentacion = document.getElementById("ins_presentacion");
@@ -18,10 +17,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function actualizarLabels() {
     if (selPresentacion.value === "caja") {
-      lblMan.childNodes[0].textContent = "Cajas Recibidas";
+      lblMan.childNodes[0].textContent = "Cajas ";
       divSoloCaja.style.display = "";
     } else {
-      lblMan.childNodes[0].textContent = "Unidades Recibidas ";
+      lblMan.childNodes[0].textContent = "Unidades ";
       divSoloCaja.style.display = "none";
       inputUnidades.value = "1";
     }
@@ -33,33 +32,12 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   let insumos = [];
-  let dataDonacion = {};
+  let dataAlmacen = {};
 
   if (inputFechaHora && !inputFechaHora.value) {
     const now = new Date();
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
     inputFechaHora.value = now.toISOString().slice(0, 16);
-  }
-
-  function saveToStorage() {
-    try {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(insumos));
-    } catch (e) {}
-  }
-
-  function clearStorage() {
-    try {
-      sessionStorage.removeItem(STORAGE_KEY);
-    } catch (e) {}
-  }
-
-  function loadFromStorage() {
-    try {
-      const raw = sessionStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : null;
-    } catch (e) {
-      return null;
-    }
   }
 
   const switchTab = (targetId) => {
@@ -71,39 +49,20 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  if (btnNextStep && formDonacionWizard) {
-    btnNextStep.addEventListener("click", async () => {
-      if (!formDonacionWizard.checkValidity()) {
-        formDonacionWizard.classList.add("was-validated");
+  if (btnNextStep && formWizard) {
+    btnNextStep.addEventListener("click", () => {
+      if (!formWizard.checkValidity()) {
+        formWizard.classList.add("was-validated");
         return;
       }
 
-      const formData = new FormData(formDonacionWizard);
-      dataDonacion = {
+      const formData = new FormData(formWizard);
+      dataAlmacen = {
         fecha_hora_llegada: formData.get("fecha_hora_llegada"),
         numero_guia_remision: "N/A",
-        organizacion_donante: formData.get("organizacion_donante"),
         nombre_transportista: formData.get("nombre_transportista"),
         placa_vehiculo: "N/A",
       };
-
-      const draft = loadFromStorage();
-      if (draft && draft.length > 0) {
-        const result = await Swal.fire({
-          title: "¿Retomar ingreso anterior?",
-          text: "Se encontraron insumos sin guardar de un registro anterior. ¿Desea retomarlos?",
-          icon: "question",
-          showCancelButton: true,
-          confirmButtonText: "Sí, retomar",
-          cancelButtonText: "No, descartar",
-        });
-        if (result.isConfirmed) {
-          insumos = draft;
-          renderTable();
-        } else {
-          clearStorage();
-        }
-      }
 
       switchTab("#step2");
     });
@@ -117,7 +76,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const renderTable = () => {
     if (insumos.length === 0) {
-      tablaInsumos.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-3">Aún no se han agregado insumos.</td></tr>`;
+      tablaInsumos.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-3">Aún no se han agregado insumos.</td></tr>`;
       btnFinalizar.disabled = true;
       return;
     }
@@ -131,9 +90,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 <td>${item.categoria}</td>
                 <td>${item.descripcion_insumo}</td>
                 <td class="text-capitalize">${item.presentacion}</td>
-                <td class="text-center">${item.unidades_por_presentacion}</td>
-                <td class="text-center">${item.peso_por_unidad}</td>
-                <td class="text-center">${item.fecha_vencimiento || "-"}</td>
                 <td class="text-center">${item.cantidad_manifestada}</td>
                 <td>${item.estado}</td>
                 <td class="text-center">
@@ -150,7 +106,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const idx = parseInt(e.currentTarget.getAttribute("data-index"));
         insumos.splice(idx, 1);
         renderTable();
-        saveToStorage();
       });
     });
   };
@@ -196,21 +151,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (manifestada < 0) {
         showErrorToast({
-          message: "La cantidad manifestada no puede ser negativa.",
+          message: "La cantidad no puede ser negativa.",
         });
         return;
-      }
-
-      if (vencimiento) {
-        const hoy = new Date();
-        hoy.setHours(0, 0, 0, 0);
-        const fechaVen = new Date(vencimiento + "T00:00:00");
-        if (fechaVen <= hoy) {
-          showErrorToast({
-            message: "La fecha de vencimiento debe ser mayor a la fecha actual.",
-          });
-          return;
-        }
       }
 
       if (peso > 1) {
@@ -239,8 +182,6 @@ document.addEventListener("DOMContentLoaded", () => {
         fecha_vencimiento: vencimiento || null,
       });
 
-      saveToStorage();
-
       document.getElementById("ins_descripcion").value = "";
       document.getElementById("ins_manifestada").value = "1";
       document.getElementById("ins_descripcion").focus();
@@ -254,7 +195,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (insumos.length === 0) return;
 
       const payload = {
-        donacion: dataDonacion,
+        almacen: dataAlmacen,
         insumos: insumos,
       };
 
@@ -262,13 +203,12 @@ document.addEventListener("DOMContentLoaded", () => {
       btnFinalizar.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Guardando...`;
 
       $.ajax({
-        url: baseUrl + "api/donaciones",
+        url: baseUrl + "api/almacen",
         method: "POST",
         contentType: "application/json",
         data: JSON.stringify(payload),
         success: function (response) {
           if (response.value) {
-            clearStorage();
             Toast.fire({ icon: "success", title: response.message }).then(
               () => {
                 window.location.reload();

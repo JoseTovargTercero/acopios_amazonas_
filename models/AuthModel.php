@@ -16,7 +16,7 @@ class AuthModel
      */
     public function login(string $nombre, string $codigo): ?array
     {
-        $sql = "SELECT id, nombre, codigo FROM centros WHERE nombre = ? AND codigo = ? LIMIT 1";
+        $sql = "SELECT id, nombre, codigo, tipo FROM centros WHERE nombre = ? AND codigo = ? LIMIT 1";
         $stmt = $this->db->prepare($sql);
         if (!$stmt) {
             throw new \RuntimeException("Error al preparar consulta: " . $this->db->error);

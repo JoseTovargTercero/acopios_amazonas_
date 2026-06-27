@@ -18,6 +18,7 @@ require_once __DIR__ . '/controllers/AlertaController.php';
 require_once __DIR__ . '/controllers/NotificationController.php';
 require_once __DIR__ . '/controllers/EmpresaController.php';
 require_once __DIR__ . '/controllers/DonacionController.php';
+require_once __DIR__ . '/controllers/AlmacenController.php';
 
 use App\Core\ViewRenderer;
 
@@ -73,6 +74,7 @@ $router->group(['middleware' => AuthMiddleware::class], function ($router) {
 // El perfil es la única vista que todos los usuarios logueados deben ver
 $router->group(['middleware' => LoginRequiredMiddleware::class], function ($router) {
     $router->get('/perfil', ['vista' => 'modules/perfil_view', 'vistaData' => ['titulo' => 'Perfil de Usuario']]);
+    $router->get('/perfil_almacen', ['vista' => 'modules/perfil_almacen_view', 'vistaData' => ['titulo' => 'Almacen']]);
     $router->get('/historial_donaciones', ['vista' => 'modules/historial_donaciones_view', 'vistaData' => ['titulo' => 'Historial de Donaciones']]);
     $router->get('/admin_donaciones', ['vista' => 'modules/admin_donaciones_view', 'vistaData' => ['titulo' => 'Administración General de Donaciones']]);
     $router->get('/empresas', ['vista' => 'modules/empresas_view', 'vistaData' => ['titulo' => 'Empresas']]);
@@ -87,6 +89,9 @@ $router->group(['prefix' => '/api'], function ($router) {
 
 
     // FUNCIONAMIENTO DEL SISMTEA
+
+    // Almacén
+    $router->post('/almacen', ['controlador' => \App\Controllers\AlmacenController::class, 'accion' => 'crear']);
 
     // Donaciones
     $router->post('/donaciones', ['controlador' => \App\Controllers\DonacionController::class, 'accion' => 'crear']);

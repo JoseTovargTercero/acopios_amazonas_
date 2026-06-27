@@ -23,10 +23,15 @@ class Database
 
         $host = 'localhost';
         $dbname = 'acopio';
-        //$username = 'root';
-        $username = 'acopio_user';
-        //$password =  '';
-        $password =  'd{adu7O~Hygc';
+
+        if ($_SERVER['HTTP_HOST'] === 'localhost') {
+            $username = 'root';
+            $password =  '';
+        } else {
+            $usesirname = 'acopio_user';
+            $password =  'd{adu7O~Hygc';
+        }
+
 
         // Definimos estas constantes solo si no existen, para evitar notificaciones de "Constant already defined"
         if (!defined('APP_URL')) {

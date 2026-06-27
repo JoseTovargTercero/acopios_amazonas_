@@ -195,6 +195,13 @@ class SystemUserController
             $_SESSION['permisos'] = $permisosArray;
             $_SESSION['session_id'] = $sessionData['session_id'];
 
+            $stmtTipo = \Database::getInstance()->prepare("SELECT tipo FROM centros WHERE id = ?");
+            $stmtTipo->bind_param('i', $usuario['user_id']);
+            $stmtTipo->execute();
+            $rowTipo = $stmtTipo->get_result()->fetch_assoc();
+            $_SESSION['tipo'] = $rowTipo['tipo'];
+            $stmtTipo->close();
+
             // ----- Payload -----
             $data = [
                 'nombre' => $_SESSION['nombre'],
@@ -431,6 +438,13 @@ class SystemUserController
             $_SESSION['nombre'] = $usuario['nombre'] ?? 'Usuario';
             $_SESSION['nivel'] = $nivel;
             $_SESSION['user_type'] = $userType;
+
+            $stmtTipo = \Database::getInstance()->prepare("SELECT tipo FROM centros WHERE id = ?");
+            $stmtTipo->bind_param('i', $usuario['user_id']);
+            $stmtTipo->execute();
+            $rowTipo = $stmtTipo->get_result()->fetch_assoc();
+            $_SESSION['tipo'] = $rowTipo['tipo'];
+            $stmtTipo->close();
 
             if ($nivel === 0) {
                 $_SESSION['permisos'] = ['*'];

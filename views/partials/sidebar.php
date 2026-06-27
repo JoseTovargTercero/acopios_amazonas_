@@ -3,13 +3,23 @@ $isLoggedIn = isset($_SESSION['user_id']);
 $flatMenuItems = [];
 
 if ($isLoggedIn) {
-    // Menú estático para acopio
-    $flatMenuItems = [
-        ['nombre' => 'Nueva Donación', 'icono' => 'mdi mdi-plus-circle', 'url' => 'perfil', 'categoria' => 'Operaciones'],
-        ['nombre' => 'Historial Donaciones', 'icono' => 'mdi mdi-format-list-bulleted', 'url' => 'historial_donaciones', 'categoria' => 'Operaciones'],
-        ['nombre' => 'Admin Donaciones', 'icono' => 'mdi mdi-shield-crown', 'url' => 'admin_donaciones', 'categoria' => 'Administración'],
-        ['nombre' => 'Cerrar Sesión', 'icono' => 'mdi mdi-logout', 'url' => 'api/logout', 'categoria' => 'General'],
-    ];
+    $tipo = $_SESSION['tipo'];
+
+    if ($tipo == 1) {
+        // tipo 1: solo ve Almacén
+        $flatMenuItems = [
+            ['nombre' => 'Almacén', 'icono' => 'mdi mdi-warehouse', 'url' => 'perfil_almacen', 'categoria' => 'Operaciones'],
+            ['nombre' => 'Cerrar Sesión', 'icono' => 'mdi mdi-logout', 'url' => 'api/logout', 'categoria' => 'General'],
+        ];
+    } else {
+        // tipo 0 (o cualquier otro): ve todo excepto Almacén
+        $flatMenuItems = [
+            ['nombre' => 'Nueva Donación', 'icono' => 'mdi mdi-plus-circle', 'url' => 'perfil', 'categoria' => 'Operaciones'],
+            ['nombre' => 'Historial Donaciones', 'icono' => 'mdi mdi-format-list-bulleted', 'url' => 'historial_donaciones', 'categoria' => 'Operaciones'],
+            ['nombre' => 'Admin Donaciones', 'icono' => 'mdi mdi-shield-crown', 'url' => 'admin_donaciones', 'categoria' => 'Administración'],
+            ['nombre' => 'Cerrar Sesión', 'icono' => 'mdi mdi-logout', 'url' => 'api/logout', 'categoria' => 'General'],
+        ];
+    }
 }
 
 function buildMenuTree(array $flatItems): array

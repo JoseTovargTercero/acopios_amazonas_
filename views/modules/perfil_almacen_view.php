@@ -5,7 +5,7 @@
                 <i class="mdi mdi-storefront text-primary"></i>
                 <?= htmlspecialchars($_SESSION['nombre'] ?? 'Centro de Acopio') ?>
             </h2>
-            <p class="text-muted fs-5">Gestión y control de donaciones recibidas</p>
+            <p class="text-muted fs-5">Gestión y control de ingresos a almacén</p>
         </div>
     </div>
 
@@ -13,7 +13,7 @@
         <div class="col-12">
             <div class="card shadow-sm border-0">
                 <div class="card-header bg-primary text-white d-flex align-items-center">
-                    <h5 class="card-title text-white mb-0"><i class="mdi mdi-clipboard-plus-outline me-2"></i> Registrar Nueva Donación</h5>
+                    <h5 class="card-title text-white mb-0"><i class="mdi mdi-clipboard-plus-outline me-2"></i> Registrar Nuevo Ingreso a Almacén</h5>
                 </div>
                 <div class="card-body p-4">
                     <!-- Wizard Nav -->
@@ -44,12 +44,6 @@
                                         <input type="datetime-local" class="form-control" id="fecha_hora_llegada" name="fecha_hora_llegada" required>
                                         <div class="invalid-feedback">Por favor, indique la fecha y hora.</div>
                                     </div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="organizacion_donante" class="form-label fw-bold">Organización Donante <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="organizacion_donante" name="organizacion_donante" maxlength="150" required placeholder="Nombre de la organización o donante">
-                                    <div class="invalid-feedback">Por favor, indique la organización donante.</div>
                                 </div>
 
                                 <div class="row">
@@ -114,7 +108,7 @@
                                     </div>
 
                                     <div class="col-md-3 mb-2">
-                                        <label class="form-label fw-bold" id="lbl-man">Cant. Recibidas <span class="text-danger">*</span></label>
+                                        <label class="form-label fw-bold" id="lbl-man">Cant. Manifestada <span class="text-danger">*</span></label>
                                         <input type="number" class="form-control form-control-sm" id="ins_manifestada" value="1" min="0">
                                     </div>
                                     <div class="col-md-4 mb-2">
@@ -135,17 +129,14 @@
                                                 <th>Categoría</th>
                                                 <th>Descripción</th>
                                                 <th>Present.</th>
-                                                <th class="text-center">Unid/Caja</th>
-                                                <th class="text-center">Peso (kg)</th>
-                                                <th class="text-center">Vencimiento</th>
-                                                <th class="text-center">Cant.</th>
+                                                <th class="text-center">Cant. Manif.</th>
                                                 <th>Estado</th>
                                                 <th class="text-center">Acción</th>
                                             </tr>
                                         </thead>
                                         <tbody id="tablaInsumos">
                                             <tr>
-                                                <td colspan="9" class="text-center text-muted">Aún no se han agregado insumos.</td>
+                                                <td colspan="6" class="text-center text-muted">Aún no se han agregado insumos.</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -169,4 +160,4 @@
 <script>
     const baseUrl = "<?php echo BASE_URL; ?>";
 </script>
-<script type="module" src="<?= BASE_URL ?>public/assets/js/modules/perfil_view.js"></script>
+<script type="module" src="<?= BASE_URL ?>public/assets/js/modules/perfil_almacen_view.js"></script>
